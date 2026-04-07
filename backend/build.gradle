@@ -29,3 +29,14 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.named('bootRun') {
+	if (file('.env').exists()) {
+		file('.env').readLines().each { line ->
+			if (line.trim().size() > 0 && !line.startsWith("#")) {
+				def (key, value) = line.split("=", 2)
+				environment key, value
+			}
+		}
+	}
+}
