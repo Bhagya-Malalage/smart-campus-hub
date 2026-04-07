@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Shield, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,18 @@ import { motion } from 'framer-motion';
 export default function WelcomePage() {
   const navigate = useNavigate();
   const { isAuthenticated, role } = useAuth();
+  const [dbStatus, setDbStatus] = useState<{status: string, message: string} | null>(null);
+
+  const testDbConnection = async () => {
+    try {
+      setDbStatus({ status: 'loading', message: 'Connecting to Java backend...' });
+      const res = await fetch('http://localhost:8082/api/test-db');
+      const data = await res.json();
+      setDbStatus(data);
+    } catch(err: any) {
+      setDbStatus({ status: 'error', message: 'Backend unreachable. Is it running? (' + err.message + ')' });
+    }
+  };
 
   if (isAuthenticated) {
     const paths: Record<Role, string> = { user: '/dashboard', admin: '/admin/dashboard', technician: '/technician/dashboard' };
@@ -56,11 +69,23 @@ export default function WelcomePage() {
               className="gradient-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow text-base px-8">
               Get Started <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" onClick={() => navigate('/sign-in')}
+            <Button variant="outline" size="lg" onClick={testDbConnection}
               className="border-primary-foreground/20 text-primary-foreground bg-primary-foreground/5 hover:bg-primary-foreground/10 text-base px-8">
-              View Demo
+              Test Database Connection
             </Button>
           </div>
+
+          {dbStatus && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} 
+              className={`mt-6 p-4 rounded-lg font-mono text-sm max-w-lg mx-auto ${
+                dbStatus.status === 'success' ? 'bg-green-500/20 text-green-100 border border-green-500/50' :
+                dbStatus.status === 'loading' ? 'bg-blue-500/20 text-blue-100 border border-blue-500/50' :
+                'bg-red-500/20 text-red-100 border border-red-500/50'
+              }`}>
+              <div className="font-bold mb-1 uppercase tracking-wider">{dbStatus.status}</div>
+              <div>{dbStatus.message}</div>
+            </motion.div>
+          )}
 
           {/* Feature cards */}
           <motion.div
